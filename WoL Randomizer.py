@@ -480,6 +480,7 @@ class Main(QWidget):
         self.seed_layout = QGridLayout()
         
         self.seed_field = QLineEdit(config.get("Misc", "sSeed"))
+        self.seed_field.setStyleSheet("color: #ffffff")
         self.seed_field.setMaxLength(30)
         self.seed_field.textChanged[str].connect(self.new_seed)
         self.seed_layout.addWidget(self.seed_field, 0, 0, 1, 2)
