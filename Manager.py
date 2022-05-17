@@ -11,8 +11,6 @@ from xml.dom import minidom
 def init_variable():
     global spirit_list
     spirit_list = []
-    global spirit_in_wol
-    spirit_in_wol = []
     global summonable
     summonable = []
     global food_type
@@ -441,10 +439,13 @@ def load_json():
     #Convert all strings to hash
     for i in list(all_json["CustomBattle"]):
         all_json["CustomBattle"][hash(i)] = all_json["CustomBattle"].pop(i)
+    for i in list(all_json["CustomSpirit"]):
+        all_json["CustomSpirit"][hash(i)] = all_json["CustomSpirit"].pop(i)
+        all_json["CustomSpirit"][hash(i)]["spirit_string"] = i
     for i in list(all_json["Fighter"]):
         all_json["Fighter"][hash(i)] = all_json["Fighter"].pop(i)
-    for i in list(all_json["Tweak"]):
-        all_json["Tweak"][hash(i)] = all_json["Tweak"].pop(i)
+    for i in list(all_json["TweakBattle"]):
+        all_json["TweakBattle"][hash(i)] = all_json["TweakBattle"].pop(i)
     #Open text files
     all_json["Skin"] = {}
     for i in os.listdir("Data\\Mod"):
@@ -456,72 +457,7 @@ def load_json():
         for e in range(8):
             all_json["Skin"][hash(character)][e] = int(lines[e].strip().split("c0")[-1])
 
-def add_custom_spirits(path):
-    #There are 3 spirits in the game that became irrelevent after DLC releases
-    #Use this opportunity to replace them with other characters that don't have a spirit
-    for i in all_json["CustomSpirit"]:
-        patch_text_entry("msg_spirits", "spi_" + i, all_json["CustomSpirit"][i]["display_name"])
-        change_directory_id(i, all_json["CustomSpirit"][i]["spirit_slot"])
-        fix_spirit_effect_pos(i, all_json["CustomSpirit"][i]["similar_shape"])
-    #Convert dict entries to hashes
-    for i in list(all_json["CustomSpirit"]):
-        all_json["CustomSpirit"][hash(i)] = all_json["CustomSpirit"].pop(i)
-    #Patch data in spirit param
-    for i in all_param["ui_spirit_db"][hash("db_root")]:
-        id = i[hash("ui_spirit_id")].value
-        if id in all_json["CustomSpirit"]:
-            patch_param_entry(i, all_json["CustomSpirit"][id], False)
-    #Copy spirit UIs to mod folder
-    spirit_images = []
-    for i in os.listdir("Data\\Texture"):
-        name, extension = os.path.splitext(i)
-        spirit_images.append(name.split("_")[-1])
-    for i in spirit_images:
-        for e in range(3):
-            shutil.copyfile("Data\\Texture\\spirits_" + str(e) + "_" + i + ".bntx", path + "\\ui\\replace\\spirits\\spirits_" + str(e) + "\\spirits_" + str(e) + "_" + i + ".bntx")
-
-def change_directory_id(old_slot, new_slot):
-    if old_slot == new_slot:
-        return
-    #Start by getting the slot number for both spirits
-    for i in all_param["ui_spirit_db"][hash("db_root")]:
-        id = i[hash("ui_spirit_id")].value
-        if id == hash(old_slot):
-            old_id = i[hash("directory_id")].value
-        if id == hash(new_slot):
-            new_id = i[hash("directory_id")].value
-    #Then shift the value for all other spirits
-    for i in all_param["ui_spirit_db"][hash("db_root")]:
-        id = i[hash("ui_spirit_id")].value
-        if id == hash(old_slot):
-            i[hash("directory_id")].value = new_id
-        elif new_id < old_id:
-            if new_id <= i[hash("directory_id")].value < old_id:
-                i[hash("directory_id")].value += 1
-        elif new_id > old_id:
-            if new_id >= i[hash("directory_id")].value > old_id:
-                i[hash("directory_id")].value -= 1
-
-def fix_spirit_effect_pos(old_layout, new_layout):
-    if old_layout == new_layout:
-        return
-    #Position graphical spirit effects based on another spirit of similar shape
-    data = []
-    for e in all_param["ui_spirit_layout_db"][hash("db_root")]:
-        if e[hash("ui_spirit_layout_id")].value == hash(new_layout):
-            effect_num = e[hash("effect_num")].value
-            for o in range(15):
-                data.append((e[hash("effect_pos_" + str(o) + "_x")].value, e[hash("effect_pos_" + str(o) + "_y")].value))
-            break
-    for e in all_param["ui_spirit_layout_db"][hash("db_root")]:
-        if e[hash("ui_spirit_layout_id")].value == hash(old_layout):
-            e[hash("effect_num")].value = effect_num
-            for o in range(15):
-                e[hash("effect_pos_" + str(o) + "_x")].value = data[o][0]
-                e[hash("effect_pos_" + str(o) + "_y")].value = data[o][1]
-            break
-
-def pre_patch_battle():
+def apply_default_tweaks():
     #FIGHTER
     #Some fighter battles are incomplete and need to be fixed
     #Battle data
@@ -547,14 +483,27 @@ def pre_patch_battle():
             i[hash("ability2")].value            = hash("none")
             i[hash("ability3")].value            = hash("none")
     #CUSTOM
-    #Some spirits have no real battle assigned to them so they need to be fixed
-    #Make added spirit fights rematchable and non-enhanceable
+    #Apply custom spirits
+    existing_spirits = []
     for i in all_param["ui_spirit_db"][hash("db_root")]:
         id = i[hash("ui_spirit_id")].value
+        if id in all_json["CustomSpirit"]:
+            existing_spirits.append(id)
+            patch_param_entry(i, all_json["CustomSpirit"][id], False)
+            patch_text_entry("msg_spirits", "spi_" + all_json["CustomSpirit"][id]["spirit_string"], all_json["CustomSpirit"][id]["display_name"])
+            change_directory_id(i[hash("directory_id")].value, all_json["CustomSpirit"][id]["spirit_slot"])
+            fix_spirit_stand_pos(id, all_json["CustomSpirit"][id]["center_x"], all_json["CustomSpirit"][id]["center_y"])
+            fix_spirit_effect_pos(id, hash(all_json["CustomSpirit"][id]["similar_shape"]), all_json["CustomSpirit"][id]["effect_offset_x"], all_json["CustomSpirit"][id]["effect_offset_y"])
+        #Make added spirit fights rematchable and non-enhanceable
         if id in all_json["CustomBattle"]:
             i[hash("evolve_src")].value        = hash("0")
             i[hash("is_board_appear")].value   = True
             i[hash("is_rematch_target")].value = True
+    #If spirit doesn't exist then create it
+    for i in all_json["CustomSpirit"]:
+        if not i in existing_spirits:
+            add_new_spirit(i)
+    #Some spirits have no real battle assigned to them so they need to be fixed
     #Battle data
     for i in all_param["ui_spirits_battle_db"][hash("battle_data_tbl")]:
         id = i[hash("battle_id")].value
@@ -583,21 +532,21 @@ def pre_patch_battle():
             new_list.append(all_param["ui_spirits_battle_db"][hash("fighter_data_tbl")][i])
     all_param["ui_spirits_battle_db"][hash("fighter_data_tbl")].set_list(new_list)
     #TWEAK
-    #Some existing battles may need quick minor changes
+    #Some existing spirits may need quick minor changes
     #Battle data
     for i in all_param["ui_spirits_battle_db"][hash("battle_data_tbl")]:
         id = i[hash("battle_id")].value
-        if id in all_json["Tweak"]:
-            patch_param_entry(i, all_json["Tweak"][id], False)
+        if id in all_json["TweakBattle"]:
+            patch_param_entry(i, all_json["TweakBattle"][id], False)
     #Enemy data
     for i in all_param["ui_spirits_battle_db"][hash("fighter_data_tbl")]:
         id = i[hash("battle_id")].value
         #Only allow tweaks to the main enemy
         if i[hash("entry_type")].value != hash("main_type"):
             continue
-        if id in all_json["Tweak"]:
-            patch_param_entry(i, all_json["Tweak"][id], False)
-    #SKIN
+        if id in all_json["TweakBattle"]:
+            patch_param_entry(i, all_json["TweakBattle"][id], False)
+    #Skin
     #Adapt the skin colors used in spirit battle to the user's mods
     for i in all_param["ui_spirits_battle_db"][hash("fighter_data_tbl")]:
         id = i[hash("battle_id")].value
@@ -611,21 +560,120 @@ def pre_patch_battle():
         all_param["(" + i + ")duet_param"][hash("wait_time_max")][hash("value_level_min")].value = 220
         all_param["(" + i + ")duet_param"][hash("wait_time_max")][hash("value_level_max")].value = 180
 
-def patch_param_entry(entry, data, special):
-    for i in data:
-        try:
-            if isinstance(data[i], str):
-                entry[hash(i)].value = hash(data[i])
-            else:
-                entry[hash(i)].value = data[i]
-        except IndexError:
-            continue
-    if special:
-        if data["use_spirit"]:
-            entry[hash("spirit_name")].value = entry[hash("battle_id")].value
-        else:
-            entry[hash("spirit_name")].value = hash("none")
-    return entry
+def add_new_spirit(spirit):
+    has_battle = spirit in all_json["CustomBattle"]
+    #Append spirit entry
+    #Only allow the spirit slot to either be over one of the online spirits or appended at the end
+    directory_id_list = []
+    for e in range(len(all_param["ui_spirit_db"][hash("db_root")])):
+        directory_id_list.append(all_param["ui_spirit_db"][hash("db_root")][e][hash("directory_id")].value)
+    if all_json["CustomSpirit"][spirit]["spirit_slot"] in directory_id_list or all_json["CustomSpirit"][spirit]["spirit_slot"] < 0:
+        directory_id = max(max(directory_id_list), 1513) + 1
+    else:
+        directory_id = all_json["CustomSpirit"][spirit]["spirit_slot"]
+    param_list = list(all_param["ui_spirit_db"][hash("db_root")])
+    param_list.append(param_list[0].clone())
+    patch_param_entry(param_list[-1], all_json["CustomSpirit"][spirit], False)
+    param_list[-1][hash("ui_spirit_id")].value = spirit
+    param_list[-1][hash("name_id")].value      = all_json["CustomSpirit"][spirit]["spirit_string"]
+    param_list[-1][hash("save_no")].value      = directory_id - 1
+    param_list[-1][hash("directory_id")].value = directory_id
+    if has_battle:
+        param_list[-1][hash("is_board_appear")].value   = True
+        param_list[-1][hash("is_rematch_target")].value = True
+    else:
+        param_list[-1][hash("is_board_appear")].value   = False
+        param_list[-1][hash("is_rematch_target")].value = False
+    all_param["ui_spirit_db"][hash("db_root")].set_list(param_list)
+    #Append layout entry
+    param_list = list(all_param["ui_spirit_layout_db"][hash("db_root")])
+    param_list.append(param_list[0].clone())
+    param_list[-1][hash("ui_spirit_layout_id")].value = spirit
+    all_param["ui_spirit_layout_db"][hash("db_root")].set_list(param_list)
+    fix_spirit_stand_pos(spirit, all_json["CustomSpirit"][spirit]["center_x"], all_json["CustomSpirit"][spirit]["center_y"])
+    fix_spirit_effect_pos(spirit, hash(all_json["CustomSpirit"][spirit]["similar_shape"]), all_json["CustomSpirit"][spirit]["effect_offset_x"], all_json["CustomSpirit"][spirit]["effect_offset_y"])
+    #Append battle entry
+    param_list = list(all_param["ui_spirits_battle_db"][hash("battle_data_tbl")])
+    param_list.append(param_list[0].clone())
+    if has_battle:
+        patch_param_entry(param_list[-1], all_json["CustomBattle"][spirit], False)
+    param_list[-1][hash("battle_id")].value = spirit
+    all_param["ui_spirits_battle_db"][hash("battle_data_tbl")].set_list(param_list)
+    #Append enemy entry
+    param_list = list(all_param["ui_spirits_battle_db"][hash("fighter_data_tbl")])
+    if has_battle:
+        for e in all_json["CustomBattle"][spirit]["enemy"]:
+            param_list.append(param_list[0].clone())
+            param_list[-1][hash("battle_id")].value = spirit
+            patch_param_entry(param_list[-1], e, True)
+    else:
+        param_list.append(param_list[0].clone())
+        param_list[-1][hash("battle_id")].value = spirit
+    all_param["ui_spirits_battle_db"][hash("fighter_data_tbl")].set_list(param_list)
+    #Append text entry
+    patch_text_entry("msg_spirits", "spi_" + all_json["CustomSpirit"][spirit]["spirit_string"], all_json["CustomSpirit"][spirit]["display_name"])
+
+def change_directory_id(old_slot, new_slot):
+    if old_slot == new_slot:
+        return
+    #Change slot id and shift the value for all other spirits in between
+    for i in all_param["ui_spirit_db"][hash("db_root")]:
+        if i[hash("directory_id")].value == old_slot:
+            i[hash("directory_id")].value = new_slot
+        elif new_slot < old_slot:
+            if new_slot <= i[hash("directory_id")].value < old_slot:
+                i[hash("directory_id")].value += 1
+        elif new_slot > old_slot:
+            if new_slot >= i[hash("directory_id")].value > old_slot:
+                i[hash("directory_id")].value -= 1
+    #Do it in the json too
+    for i in all_json["CustomSpirit"]:
+        if new_slot < old_slot:
+            if new_slot <= all_json["CustomSpirit"][i]["spirit_slot"] < old_slot:
+                all_json["CustomSpirit"][i]["spirit_slot"] += 1
+        elif new_slot > old_slot:
+            if new_slot >= all_json["CustomSpirit"][i]["spirit_slot"] > old_slot:
+                all_json["CustomSpirit"][i]["spirit_slot"] -= 1
+
+def fix_spirit_stand_pos(spirit, center_x, center_y):
+    #Adjust the center point of a spirit image based on chosen image coordinates
+    with open("Data\\Texture\\spirits_0_" + all_json["CustomSpirit"][spirit]["spirit_string"] + ".bntx", "r+b") as file:
+        file.seek(0x21C)
+        width = int.from_bytes(file.read(2), "little")
+        file.seek(0x220)
+        height = int.from_bytes(file.read(2), "little")
+    for e in all_param["ui_spirit_layout_db"][hash("db_root")]:
+        if e[hash("ui_spirit_layout_id")].value == spirit:
+            e[hash("ui_art_on_stand_center_px_x")].value = round(width/2  - center_x)
+            e[hash("ui_art_on_stand_center_px_y")].value = round(center_y - height/2)
+            e[hash("ui_art_on_stand_scale")].value = 1
+            e[hash("ui_art_center_px_x")].value = e[hash("ui_art_on_stand_center_px_x")].value - 5
+            e[hash("ui_art_center_px_y")].value = e[hash("ui_art_on_stand_center_px_y")].value - 130
+            e[hash("ui_art_scale")].value = 1
+            e[hash("ui_art_type_under_center_px_x")].value = e[hash("ui_art_on_stand_center_px_x")].value
+            e[hash("ui_art_type_under_center_px_y")].value = e[hash("ui_art_on_stand_center_px_y")].value - 20
+            e[hash("ui_art_type_under_scale")].value = 1
+            e[hash("ui_art_chara_sel_center_px_x")].value = e[hash("ui_art_on_stand_center_px_x")].value
+            e[hash("ui_art_chara_sel_center_px_y")].value = e[hash("ui_art_on_stand_center_px_y")].value + 30
+            e[hash("ui_art_chara_sel_scale")].value = 1
+            break
+
+def fix_spirit_effect_pos(old_layout, new_layout, offset_x, offset_y):
+    #Position graphical spirit effects based on another spirit of similar shape
+    data = []
+    for e in all_param["ui_spirit_layout_db"][hash("db_root")]:
+        if e[hash("ui_spirit_layout_id")].value == new_layout:
+            effect_num = e[hash("effect_num")].value
+            for o in range(15):
+                data.append((e[hash("effect_pos_" + str(o) + "_x")].value, e[hash("effect_pos_" + str(o) + "_y")].value))
+            break
+    for e in all_param["ui_spirit_layout_db"][hash("db_root")]:
+        if e[hash("ui_spirit_layout_id")].value == old_layout:
+            e[hash("effect_num")].value = effect_num
+            for o in range(15):
+                e[hash("effect_pos_" + str(o) + "_x")].value = data[o][0] + offset_x
+                e[hash("effect_pos_" + str(o) + "_y")].value = data[o][1] + offset_y
+            break
 
 def gather_data():
     #List spirits
@@ -1159,6 +1207,22 @@ def patch_master_element():
             i[hash("obj_effect_hash_out")].value           = hash("cp_map_" + element + "spirits_release")
     #This however does not affect the intro animations, maybe those are hardcoded
 
+def patch_param_entry(entry, data, special):
+    for i in data:
+        try:
+            if isinstance(data[i], str):
+                entry[hash(i)].value = hash(data[i])
+            else:
+                entry[hash(i)].value = data[i]
+        except IndexError:
+            continue
+    if special:
+        if data["use_spirit"]:
+            entry[hash("spirit_name")].value = entry[hash("battle_id")].value
+        else:
+            entry[hash("spirit_name")].value = hash("none")
+    return entry
+
 def patch_text_entry(file, entry, text):
     #Create msbt patches directly when changing a string entry
     try:
@@ -1167,6 +1231,22 @@ def patch_text_entry(file, entry, text):
         all_text[file] = ET.Element("xmsbt")
     entry = ET.SubElement(all_text[file], "entry", label=entry)
     ET.SubElement(entry, "text").text = text
+
+def copy_spirit_images(path):
+    #Copy spirit UIs to mod folder
+    spirit_images = []
+    for i in os.listdir("Data\\Texture"):
+        name, extension = os.path.splitext(i)
+        spirit_images.append(name.replace("spirits_0_", "").replace("spirits_1_", "").replace("spirits_2_", ""))
+    spirit_images = list(dict.fromkeys(spirit_images))
+    for i in spirit_images:
+        for e in range(3):
+            shutil.copyfile("Data\\Texture\\spirits_" + str(e) + "_" + i + ".bntx", path + "\\ui\\replace\\spirits\\spirits_" + str(e) + "\\spirits_" + str(e) + "_" + i + ".bntx")
+    #To make outlines:
+    #Image dimensions x0.55
+    #Content dimensions x0.9
+    #Drop shadow grow radius 1
+    #Gaussian blur 1.25
 
 def save_param(path):
     for i in all_param:
@@ -1187,27 +1267,29 @@ def save_text(path):
 
 def get_spirits_in_wol():
     #Get a list of the spirits that can be obtained through WoL
+    list = []
     #Map spirits
     for i in all_param:
         if "map_param" in i:
             for e in all_param[i][hash("map_spot_tbl")]:
                 if e[hash("type")].value == hash("spot_type_spirit"):
-                    spirit_in_wol.append(e[hash("spirit")].value)
+                    list.append(e[hash("spirit")].value)
     #Chest spirits
     for i in all_param["spirits_campaign_item_param"][hash("item_tbl")]:
         id = i[hash("key")].value
         if id in spirit_list:
-            spirit_in_wol.append(id)
+            list.append(id)
     #Summonable spirits
     for i in all_param["ui_spirit_db"][hash("db_root")]:
         if i[hash("summon_item1")].value != hash("none"):
-            spirit_in_wol.append(i[hash("ui_spirit_id")].value)
+            list.append(i[hash("ui_spirit_id")].value)
     #Shop spirits
     for i in range(5):
         for e in all_param["ui_shop_db"][hash("shop_spirit_adv_" + str(i + 1))]:
             id = e[hash("ui_spirit_id")].value
             if id in spirit_list:
-                spirit_in_wol.append(id)
+                list.append(id)
+    return list
 
 def reset_spirit(path):
     with open(path, "r+b") as file:
@@ -1270,6 +1352,7 @@ def reset_spirit(path):
 
 def start_spirit(path):
     #Determine starting spirits
+    spirit_in_wol = get_spirits_in_wol()
     start_spirits = []
     spirit_pool = list(spirit_list)
     #One primary of each color

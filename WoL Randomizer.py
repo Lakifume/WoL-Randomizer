@@ -14,9 +14,10 @@ import shutil
 import requests
 import zipfile
 import subprocess
-import glob
-from enum import Enum
-from datetime import datetime
+
+#Get script name
+
+script_name, script_extension = os.path.splitext(os.path.basename(__file__))
 
 #Config
 
@@ -41,7 +42,6 @@ class Generate(QThread):
     def __init__(self, seed):
         QThread.__init__(self)
         self.signaller = Signaller()
-        self.exc = None
         self.seed = seed
     
     def run(self):
@@ -71,39 +71,37 @@ class Generate(QThread):
             if not os.path.isdir(mod_dir + "\\ui\\replace\\spirits\\spirits_" + str(i)):
                 os.makedirs(mod_dir + "\\ui\\replace\\spirits\\spirits_" + str(i))
         #ApplyTweaks
-        Manager.add_custom_spirits(mod_dir)
-        Manager.pre_patch_battle()
+        Manager.apply_default_tweaks()
         Manager.gather_data()
         if config.getboolean("Extra", "bRebalanceFSM"):
             Manager.rebalance_fs_meter()
         if config.getboolean("Extra", "bNoAutoDLC"):
             Manager.no_dlc_unlock()
         #Check DLCs
-        if config.getboolean("Randomize", "bFighterSpirit"):
-            if not config.getboolean("DLC", "bPackun"):
-                Manager.remove_dlc("piranha_plant")
-            if not config.getboolean("DLC", "bJack"):
-                Manager.remove_dlc("jack_phantom_thief")
-            if not config.getboolean("DLC", "bBrave"):
-                Manager.remove_dlc("brave_11")
-            if not config.getboolean("DLC", "bBuddy"):
-                Manager.remove_dlc("buddy")
-            if not config.getboolean("DLC", "bDolly"):
-                Manager.remove_dlc("dolly")
-            if not config.getboolean("DLC", "bMaster"):
-                Manager.remove_dlc("master_1")
-            if not config.getboolean("DLC", "bTantan"):
-                Manager.remove_dlc("tantan_minmin")
-            if not config.getboolean("DLC", "bPickel"):
-                Manager.remove_dlc("pickel_steve")
-            if not config.getboolean("DLC", "bEdge"):
-                Manager.remove_dlc("edge_sephiroth")
-            if not config.getboolean("DLC", "bElement"):
-                Manager.remove_dlc("element_homura")
-            if not config.getboolean("DLC", "bDemon"):
-                Manager.remove_dlc("demon_kazuya_mishima_00")
-            if not config.getboolean("DLC", "bTrail"):
-                Manager.remove_dlc("trail_sora")
+        if not config.getboolean("DLC", "bPackun"):
+            Manager.remove_dlc("piranha_plant")
+        if not config.getboolean("DLC", "bJack"):
+            Manager.remove_dlc("jack_phantom_thief")
+        if not config.getboolean("DLC", "bBrave"):
+            Manager.remove_dlc("brave_11")
+        if not config.getboolean("DLC", "bBuddy"):
+            Manager.remove_dlc("buddy")
+        if not config.getboolean("DLC", "bDolly"):
+            Manager.remove_dlc("dolly")
+        if not config.getboolean("DLC", "bMaster"):
+            Manager.remove_dlc("master_1")
+        if not config.getboolean("DLC", "bTantan"):
+            Manager.remove_dlc("tantan_minmin")
+        if not config.getboolean("DLC", "bPickel"):
+            Manager.remove_dlc("pickel_steve")
+        if not config.getboolean("DLC", "bEdge"):
+            Manager.remove_dlc("edge_sephiroth")
+        if not config.getboolean("DLC", "bElement"):
+            Manager.remove_dlc("element_homura")
+        if not config.getboolean("DLC", "bDemon"):
+            Manager.remove_dlc("demon_kazuya_mishima_00")
+        if not config.getboolean("DLC", "bTrail"):
+            Manager.remove_dlc("trail_sora")
         #Randomize
         random.seed(self.seed)
         Manager.randomize_spirit(
@@ -137,12 +135,12 @@ class Generate(QThread):
         Manager.patch_text_entry("msg_campaign", "cam_save_level_sele", str(self.seed))
         Manager.patch_text_entry("msg_campaign", "cam_save_num_area", str(self.seed))
         #Mod files
+        Manager.copy_spirit_images(mod_dir)
         Manager.save_param(mod_dir)
         if config.getboolean("Output", "bPatch"):
             Manager.convert_param_to_patch(mod_dir)
         Manager.save_text(mod_dir)
         #Save files
-        Manager.get_spirits_in_wol()
         if config.getboolean("Platform", "bSwitch"):
             if config.getboolean("Extra", "bResetSpirit"):
                 #Backup save file
@@ -188,11 +186,13 @@ class Update(QThread):
 
     def run(self):
         progress = 0
+        zip_name = "WoL Randomizer.zip"
+        exe_name = script_name + ".exe"
         self.signaller.progress.emit(progress)
         
         #Download
         
-        with open("WoLRandomizer.zip", "wb") as file_writer:
+        with open(zip_name, "wb") as file_writer:
             url = requests.get(self.api["assets"][0]["browser_download_url"], stream=True)
             for data in url.iter_content(chunk_size=4096):
                 file_writer.write(data)
@@ -211,10 +211,10 @@ class Update(QThread):
         os.remove("Data\\config.ini")
         os.remove("Data\\icon.png")
         
-        os.rename("WoLRandomizer.exe", "OldWoLRandomizer.exe")
-        with zipfile.ZipFile("WoLRandomizer.zip", "r") as zip_ref:
+        os.rename(exe_name, "delete.me")
+        with zipfile.ZipFile(zip_name, "r") as zip_ref:
             zip_ref.extractall("")
-        os.remove("WoLRandomizer.zip")
+        os.remove(zip_name)
         
         #Carry previous config settings
         
@@ -234,7 +234,7 @@ class Update(QThread):
         
         #Open new EXE
         
-        subprocess.Popen("WoLRandomizer.exe")
+        subprocess.Popen(exe_name)
         sys.exit()
 
 #Interface
@@ -262,6 +262,9 @@ class Main(QWidget):
         
         grid = QGridLayout()
         grid.setSpacing(10)
+        
+        self.dummy_box = QGroupBox()
+        grid.addWidget(self.dummy_box, 4, 0, 1, 3)
 
         #Groupboxes
 
@@ -402,12 +405,12 @@ class Main(QWidget):
         
         #Radio buttons
         
-        self.radio_button_1 = QRadioButton("Raw params")
+        self.radio_button_1 = QRadioButton("Raw Params")
         self.radio_button_1.setToolTip("Output all files as regular .prc params.")
         self.radio_button_1.toggled.connect(self.radio_button_group_1_checked)
         box_4_grid.addWidget(self.radio_button_1, 0, 0)
         
-        self.radio_button_2 = QRadioButton("Param patches")
+        self.radio_button_2 = QRadioButton("Param Patches")
         self.radio_button_2.setToolTip("Output all files as .prcx patches to avoid conflicting\nwith other mods.\nWARNING: Parcel must be installed for this to work.")
         self.radio_button_2.toggled.connect(self.radio_button_group_1_checked)
         box_4_grid.addWidget(self.radio_button_2, 1, 0)
@@ -556,16 +559,16 @@ class Main(QWidget):
         
         self.setLayout(grid)
         self.setFixedSize(1280, 720)
-        self.setWindowTitle("WoL Randomizer")
+        self.setWindowTitle(script_name)
         self.setWindowIcon(QIcon("Data\\icon.png"))
         
         #Background
         
         background = QPixmap("Data\\background.png")
-        palette = QPalette()
-        palette.setBrush(QPalette.Window, background)
+        self.palette = QPalette()
+        self.palette.setBrush(QPalette.Window, background)
         self.show()
-        self.setPalette(palette)
+        self.setPalette(self.palette)
         
         #Position
         
@@ -731,6 +734,7 @@ class Main(QWidget):
             self.save_button.setVisible(False)
             self.ryujinx_field.setVisible(True)
             self.ryujinx_button.setVisible(True)
+        self.fix_background_glitch()
     
     def new_length(self):
         config.set("Length", "iValue", str(self.length_box.value()))
@@ -741,6 +745,7 @@ class Main(QWidget):
         else:
             self.mod_field.setStyleSheet("color: #666666")
         config.set("Misc", "sModFolder", mod)
+        self.fix_background_glitch()
     
     def new_save(self, save):
         if save:
@@ -748,6 +753,7 @@ class Main(QWidget):
         else:
             self.save_field.setStyleSheet("color: #666666")
         config.set("Misc", "sSaveFile", save)
+        self.fix_background_glitch()
     
     def new_ryujinx(self, ryujinx):
         if ryujinx:
@@ -755,6 +761,15 @@ class Main(QWidget):
         else:
             self.ryujinx_field.setStyleSheet("color: #666666")
         config.set("Misc", "sRyujinxFolder", ryujinx)
+        self.fix_background_glitch()
+    
+    def fix_background_glitch(self):
+        try:
+            self.dummy_box.setStyleSheet("")
+            QApplication.processEvents()
+            self.setPalette(self.palette)
+        except TypeError:
+            return
     
     def new_seed(self, text):
         if " " in text:
@@ -893,8 +908,8 @@ class Main(QWidget):
         box.exec()
     
     def check_for_updates(self):
-        if os.path.isfile("OldWoLRandomizer.exe"):
-            os.remove("OldWoLRandomizer.exe")
+        if os.path.isfile("delete.me"):
+            os.remove("delete.me")
         try:
             api = requests.get("https://api.github.com/repos/Lakifume/WoL-Randomizer/releases/latest").json()
         except requests.ConnectionError:
@@ -906,7 +921,7 @@ class Main(QWidget):
             self.setEnabled(True)
             return
         if tag != config.get("Misc", "sVersion"):
-            choice = QMessageBox.question(self, "Auto Updater", "New version found:\n\n" + api["body"] + "\n\nUpdate ?", QMessageBox.Yes | QMessageBox.No)
+            choice = QMessageBox.question(self, "Auto Updater", "New version found:\n\n" + api["body"] + "\n\nWARNING: this will overwrite every file except for the contents of the Mod folder, make backups if you've customized anything.\n\nUpdate ?", QMessageBox.Yes | QMessageBox.No)
             if choice == QMessageBox.Yes:
                 self.progressBar = QProgressDialog("Downloading...", None, 0, api["assets"][0]["size"], self)
                 self.progressBar.setWindowTitle("Status")
