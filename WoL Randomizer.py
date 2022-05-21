@@ -78,29 +78,65 @@ class Generate(QThread):
         if config.getboolean("Extra", "bNoAutoDLC"):
             Manager.no_dlc_unlock()
         #Check DLCs
-        if not config.getboolean("DLC", "bPackun"):
+        if config.getboolean("DLC", "bPackun"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("piranha_plant")
+        else:
             Manager.remove_dlc("piranha_plant")
-        if not config.getboolean("DLC", "bJack"):
+        if config.getboolean("DLC", "bJack"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("jack_phantom_thief")
+        else:
             Manager.remove_dlc("jack_phantom_thief")
-        if not config.getboolean("DLC", "bBrave"):
+        if config.getboolean("DLC", "bBrave"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("brave_11")
+        else:
             Manager.remove_dlc("brave_11")
-        if not config.getboolean("DLC", "bBuddy"):
+        if config.getboolean("DLC", "bBuddy"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("buddy")
+        else:
             Manager.remove_dlc("buddy")
-        if not config.getboolean("DLC", "bDolly"):
+        if config.getboolean("DLC", "bDolly"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("dolly")
+        else:
             Manager.remove_dlc("dolly")
-        if not config.getboolean("DLC", "bMaster"):
+        if config.getboolean("DLC", "bMaster"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("master_1")
+        else:
             Manager.remove_dlc("master_1")
-        if not config.getboolean("DLC", "bTantan"):
+        if config.getboolean("DLC", "bTantan"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("tantan_minmin")
+        else:
             Manager.remove_dlc("tantan_minmin")
-        if not config.getboolean("DLC", "bPickel"):
+        if config.getboolean("DLC", "bPickel"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("pickel_steve")
+        else:
             Manager.remove_dlc("pickel_steve")
-        if not config.getboolean("DLC", "bEdge"):
+        if config.getboolean("DLC", "bEdge"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("edge_sephiroth")
+        else:
             Manager.remove_dlc("edge_sephiroth")
-        if not config.getboolean("DLC", "bElement"):
+        if config.getboolean("DLC", "bElement"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("element_homura")
+        else:
             Manager.remove_dlc("element_homura")
-        if not config.getboolean("DLC", "bDemon"):
+        if config.getboolean("DLC", "bDemon"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("demon_kazuya_mishima_00")
+        else:
             Manager.remove_dlc("demon_kazuya_mishima_00")
-        if not config.getboolean("DLC", "bTrail"):
+        if config.getboolean("DLC", "bTrail"):
+            if config.getboolean("Extra", "bNoAutoDLC"):
+                Manager.add_dlc_to_map("trail_sora")
+        else:
             Manager.remove_dlc("trail_sora")
         #Randomize
         random.seed(self.seed)
@@ -113,6 +149,8 @@ class Generate(QThread):
         if config.getboolean("Randomize", "bFighterSpirit"):
             random.seed(self.seed)
             Manager.randomize_mii_specials()
+        if config.getboolean("Randomize", "bChestReward"):
+            Manager.randomize_rewards()
         if config.getboolean("Randomize", "bSkillTree"):
             random.seed(self.seed)
             Manager.randomize_skill()
@@ -321,15 +359,20 @@ class Main(QWidget):
         self.check_box_3.stateChanged.connect(self.check_box_3_changed)
         box_1_grid.addWidget(self.check_box_3, 2, 0)
         
+        self.check_box_23 = QCheckBox("Chest Rewards")
+        self.check_box_23.setToolTip("Randomize the pickups found in chests.")
+        self.check_box_23.stateChanged.connect(self.check_box_23_changed)
+        box_1_grid.addWidget(self.check_box_23, 3, 0)
+        
         self.check_box_4 = QCheckBox("Boss Entities")
         self.check_box_4.setToolTip("Shuffle where the 6 sub bosses are fought.")
         self.check_box_4.stateChanged.connect(self.check_box_4_changed)
-        box_1_grid.addWidget(self.check_box_4, 3, 0)
+        box_1_grid.addWidget(self.check_box_4, 4, 0)
         
         self.check_box_5 = QCheckBox("Skill Tree")
         self.check_box_5.setToolTip("Randomize the placement of skill abilities on the tree.")
         self.check_box_5.stateChanged.connect(self.check_box_5_changed)
-        box_1_grid.addWidget(self.check_box_5, 4, 0)
+        box_1_grid.addWidget(self.check_box_5, 5, 0)
         
         #Extra
         
@@ -339,7 +382,7 @@ class Main(QWidget):
         box_2_grid.addWidget(self.check_box_22, 0, 0)
         
         self.check_box_7 = QCheckBox("No Auto DLC")
-        self.check_box_7.setToolTip("Disable the mechanic of automatically unlocking\nall DLC characters after 10 battles.")
+        self.check_box_7.setToolTip("Disable the mechanic of automatically unlocking\nall DLC characters after 10 battles. Instead they\nwill be added to the overworld.")
         self.check_box_7.stateChanged.connect(self.check_box_7_changed)
         box_2_grid.addWidget(self.check_box_7, 1, 0)
         
@@ -504,6 +547,8 @@ class Main(QWidget):
             self.check_box_2.setChecked(True)
         if config.getboolean("Randomize", "bMasterSpirit"):
             self.check_box_3.setChecked(True)
+        if config.getboolean("Randomize", "bChestReward"):
+            self.check_box_23.setChecked(True)
         if config.getboolean("Randomize", "bBossEntity"):
             self.check_box_4.setChecked(True)
         if config.getboolean("Randomize", "bSkillTree"):
@@ -596,6 +641,12 @@ class Main(QWidget):
             config.set("Randomize", "bMasterSpirit", "true")
         else:
             config.set("Randomize", "bMasterSpirit", "false")
+
+    def check_box_23_changed(self):
+        if self.check_box_23.isChecked():
+            config.set("Randomize", "bChestReward", "true")
+        else:
+            config.set("Randomize", "bChestReward", "false")
 
     def check_box_4_changed(self):
         if self.check_box_4.isChecked():
@@ -783,6 +834,8 @@ class Main(QWidget):
         if config.getboolean("Randomize", "bSpiritSpirit"):
             return True
         if config.getboolean("Randomize", "bMasterSpirit"):
+            return True
+        if config.getboolean("Randomize", "bChestReward"):
             return True
         if config.getboolean("Randomize", "bBossEntity"):
             return True

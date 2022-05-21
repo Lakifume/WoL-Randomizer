@@ -41,6 +41,30 @@ def init_variable():
         0x1c0ff4d45c,
         0x1c78f3e4ca
     ]
+    global reward_type
+    reward_type = [
+      "sp_500",
+      "sp_1000",
+      "sp_2000",
+      "sp_3000",
+      "sp_5000",
+      "skill_5",
+      "skill_10",
+      "skill_25",
+      "skill_50",
+      "energy_s_1",
+      "energy_s_2",
+      "energy_s_3",
+      "energy_s_5",
+      "energy_s_10",
+      "energy_m_1",
+      "energy_m_2",
+      "energy_m_3",
+      "energy_m_5",
+      "energy_l_1",
+      "energy_l_2",
+      "energy_l_3"
+    ]
     #Rank stuff
     global rank_to_intensity
     rank_to_intensity = {
@@ -404,6 +428,21 @@ def init_variable():
             "trail_aqua"
         ]
     }
+    global fighter_to_spot
+    fighter_to_spot = {
+        "piranha_plant":           ("light"               , "spot00210"),
+        "jack_phantom_thief":      ("sub_006_base"        , "spot00013"),
+        "brave_11":                ("sub_002_woods"       , "spot00137"),
+        "buddy":                   ("light"               , "spot00183"),
+        "dolly":                   ("light"               , "spot07754"),
+        "master_1":                ("sub_014_dark_ganon"  , "spot00306"),
+        "tantan_minmin":           ("sub_007_power_plant" , "spot00031"),
+        "pickel_steve":            ("dark"                , "spot00025"),
+        "edge_sephiroth":          ("sub_013_dark_marx"   , "spot00063"),
+        "element_homura":          ("light"               , "spot07782"),
+        "demon_kazuya_mishima_00": ("sub_015_dark_dracula", "spot00131"),
+        "trail_sora":              ("light"               , "spot00159")
+    }
     #Invert dictionaries
     for i in rank_to_star:
         rank_to_star_invert[rank_to_star[i]] = i
@@ -726,7 +765,7 @@ def rebalance_fs_meter():
         i[hash("damage_mul")].value    = 0
 
 def remove_dlc(fighter):
-    #Remove DLC fighter
+    #Remove DLC fighter from the pool
     fighter_skins = []
     found = False
     for i in all_json["Fighter"]:
@@ -744,6 +783,17 @@ def remove_dlc(fighter):
         for i in fighter_to_dlc[hash(fighter)]:
             if i in spirit_list:
                 spirit_list.remove(i)
+
+def add_dlc_to_map(fighter):
+    #Replace a chest by a DLC fighter
+    for i in all_param["spirits_campaign_map_param_" + fighter_to_spot[fighter][0]][hash("map_spot_tbl")]:
+        if i[hash("hash")].value == hash(fighter_to_spot[fighter][1]):
+            i[hash("type")].value         = hash("spot_type_fighter")
+            i[hash("spirit")].value       = hash(fighter)
+            i[hash("battle_id")].value    = hash("-1")
+            i[hash("sub_type")].value     = hash(0x17ada7e82e)
+            i[hash("item")].value         = hash("")
+            i[hash("model_degree")].value = 0
 
 def randomize_spirit(fighter, spirit, master, boss):
     #Fighter
@@ -1114,11 +1164,30 @@ def patch_spot():
                         e[hash("spirit")].value = boss_to_properties[all_replacement[boss_to_properties_invert[id]]][0]
                         e[hash("item")].value   = boss_to_properties[all_replacement[boss_to_properties_invert[id]]][1]
 
+def randomize_rewards():
+    skip_list = []
+    for i in range(10):
+        skip_list.append(hash("spirit_" + "{:02d}".format(i + 1)))
+    #Randomize standard pickups found in chests
+    for i in all_param:
+        if "map_param" in i:
+            for e in all_param[i][hash("map_spot_tbl")]:
+                if e[hash("type")].value == hash("spot_type_item") and not e[hash("item")].value in skip_list:
+                    e[hash("item")].value = hash(random.choice(reward_type))
+
 def patch_requirement():
     #Determine logic behind key spirits
     barrier = list(spirit_logic)
     barrier.remove(hash("none"))
     random.shuffle(barrier)
+    #If a barrier doesn't lock anything append it at the end
+    for i in spirit_logic:
+        if i == hash("none"):
+            continue
+        if not spirit_logic[i]["spirit"]:
+            barrier.remove(i)
+            barrier.append(i)
+    #Assign keys
     for i in barrier:
         spirit_logic[i]["key"] = any_pick(spirit_logic[hash("none")]["spirit"])
         #Checking if barrier is locked behind another barrier
