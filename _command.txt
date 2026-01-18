@@ -1,0 +1,1 @@
+pyinstaller.exe --onefile --icon=Kirby.ico "WoL Randomizer.py"
