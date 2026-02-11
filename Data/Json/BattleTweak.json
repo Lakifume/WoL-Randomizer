@@ -1,0 +1,18 @@
+{
+  "fawful": {
+    "stage_bgm": "ui_bgm_a48_malrpg3_choitotsuyoiyatsura"
+  },
+  "balder": {
+    "stage_bgm": "ui_bgm_by07_by_tomoyo"
+  },
+  "alucard": {
+    "fighter_kind": "ui_chara_edge",
+    "color": 4
+  },
+  "yoko_vernandes": {
+    "color": 3
+  },
+  "werewolf": {
+    "stage_bgm": "ui_bgm_ad26_hd_kirisakaretaseijaku"
+  }
+}

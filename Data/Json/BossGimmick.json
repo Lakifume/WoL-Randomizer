@@ -1,0 +1,251 @@
+[
+  {
+    "stage_attr": "damage_floor",
+	"floor_place_id": "preset1",
+	"recommended_skill_fixed1": "damage_floor_invalid",
+	"recommended_skill1": "damage_floor_half"
+  },
+  {
+    "stage_attr": "poison_floor",
+	"floor_place_id": "preset2",
+	"recommended_skill_fixed1": "poison_invalid",
+	"recommended_skill1": "poison_half"
+  },
+  {
+    "stage_attr": "sleep_floor",
+	"floor_place_id": "preset2",
+	"recommended_skill_fixed1": "sleep_invalid"
+  },
+  {
+    "stage_attr": "ice_floor",
+	"floor_place_id": "preset2",
+	"recommended_skill_fixed1": "freezing_invalid"
+  },
+  {
+    "stage_attr": "gum_floor",
+	"floor_place_id": "preset2",
+	"recommended_skill_fixed1": "adhesion_floor_invalid"
+  },
+  {
+    "stage_attr": "elec_floor",
+	"floor_place_id": "preset1",
+	"recommended_skill_fixed1": "paralyze_invalid"
+  },
+  {
+    "stage_attr": "mist_area",
+	"floor_place_id": "preset1",
+	"recommended_skill_fixed1": "fog_invalid"
+  },
+  {
+    "stage_attr": "poison_area",
+	"floor_place_id": "preset1",
+	"recommended_skill_fixed1": "fog_invalid",
+	"recommended_skill_fixed2": "poison_heal",
+	"recommended_skill1": "poison_half",
+	"recommended_skill2": "poison_invalid"
+  },
+  {
+    "stage_attr": "wind_area",
+	"floor_place_id": "preset1",
+    "event1_type": "storm",
+	"event1_label": "left_strong",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+	"recommended_skill_fixed1": "wind_invalid",
+	"recommended_skill1": "wind_half"
+  },
+  {
+    "event1_type": "powerup",
+	"event1_label": "player_atk_down_l",
+	"event1_start_time": 10,
+	"event1_range_time": 20,
+	"event1_count": 200,
+	"recommended_skill1": "sacrifice_offense_up",
+	"recommended_skill2": "pinch_offense_up"
+  },
+  {
+    "event1_type": "powerup",
+	"event1_label": "player_def_down_l",
+	"event1_start_time": 10,
+	"event1_range_time": 20,
+	"event1_count": 200,
+	"recommended_skill1": "sacrifice_defense_up",
+	"recommended_skill2": "pinch_defense_up"
+  },
+  {
+    "event1_type": "powerup",
+	"event1_label": "player_move_down_l",
+	"event1_start_time": 10,
+	"event1_range_time": 20,
+	"event1_count": 200,
+	"recommended_skill1": "sacrifice_speed_up",
+	"recommended_skill2": "run_speed_up"
+  },
+  {
+    "event1_type": "invalid_shield",
+	"event1_label": "player",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+    "event2_type": "invalid_normal_attack",
+	"event2_label": "player",
+	"event2_start_time": 10,
+	"event2_range_time": 20,
+	"event2_count": 200,
+	"recommended_skill1": "special_all_offense_up",
+	"recommended_skill2": "special_n_offense_up",
+	"recommended_skill3": "special_s_offense_up",
+	"recommended_skill4": "special_hi_offense_up",
+	"recommended_skill5": "special_lw_offense_up"
+  },
+  {
+    "event1_type": "invalid_special_attack",
+	"event1_label": "player",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+    "event2_type": "invalid_jump",
+	"event2_label": "player",
+	"event2_start_time": 20,
+	"event2_range_time": 10,
+	"event2_count": 200,
+	"recommended_skill1": "air_offense_up",
+	"recommended_skill2": "body_offense_up",
+	"recommended_skill3": "punch_offense_up",
+	"recommended_skill4": "kick_offense_up",
+	"recommended_skill5": "slash_offense_up",
+	"recommended_skill6": "weapon_offense_up",
+	"recommended_skill7": "dash_attack_offense_up"
+  },
+  {
+    "event1_type": "change_scale",
+	"event1_label": "small_player",
+	"event1_start_time": 20,
+	"event1_range_time": 10,
+	"event1_count": 200
+  },
+  {
+    "event1_type": "invisible",
+	"event1_label": "player",
+	"event1_start_time": 1,
+	"event1_range_time": -1
+  },
+  {
+    "event1_type": "dark",
+	"event1_start_time": 10,
+	"event1_range_time": 10,
+	"event1_count": 200
+  },
+  {
+    "event1_type": "change_gravity",
+	"event1_label": "low_player_3",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+	"recommended_skill_fixed1": "gravity_invalid",
+	"recommended_skill1": "air_offense_up",
+	"recommended_skill2": "air_defense_up",
+	"recommended_skill3": "mach_stamp"
+  },
+  {
+    "event1_type": "change_gravity",
+	"event1_label": "high_player_3",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+	"recommended_skill_fixed1": "gravity_invalid",
+	"recommended_skill1": "jump_up",
+	"recommended_skill2": "light_jump",
+	"recommended_skill3": "light_weight"
+  },
+  {
+    "battle_type": "hp",
+    "basic_init_hp": 120,
+    "event1_type": "brow_away_up",
+	"event1_label": "high_player",
+	"event1_start_time": 10,
+	"event1_range_time": 20,
+	"event1_count": 200,
+	"recommended_skill1": "physical_up",
+	"recommended_skill2": "armor_knight"
+  },
+  {
+    "event1_type": "bomb_rain",
+	"event1_start_time": 15,
+	"event1_range_time": 5,
+	"event1_count": 200,
+	"recommended_skill1": "fire_resist",
+	"recommended_skill2": "shield_max_up",
+	"recommended_skill3": "shield_heal"
+  },
+  {
+    "event1_type": "input_reverse",
+	"event1_label": "player",
+	"event1_start_time": 5,
+	"event1_range_time": 10,
+	"event1_count": 200,
+	"recommended_skill_fixed1": "controller_invalid"
+  },
+  {
+    "event1_type": "screen_reverse",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+	"recommended_skill_fixed1": "reverse_invalid"
+  },
+  {
+    "event1_type": "damage",
+	"event1_label": "player_s",
+	"event1_start_time": 20,
+	"event1_range_time": 0,
+	"event1_count": 200,
+	"recommended_skill1": "pinch_heal",
+	"recommended_skill2": "auto_heal_plus",
+	"recommended_skill3": "auto_heal"
+  },
+  {
+    "event1_type": "damage",
+	"event1_label": "player_xl",
+	"event1_start_time": 20,
+	"event1_range_time": 10,
+	"event1_count": 200,
+    "event2_type": "heal",
+	"event2_label": "player_xl",
+	"event2_start_time": 30,
+	"event2_range_time": 0,
+	"event2_count": 200,
+	"recommended_skill1": "pinch_invincible",
+	"recommended_skill2": "pinch_offense_up",
+	"recommended_skill3": "pinch_defense_up",
+	"recommended_skill4": "pinch_various_up",
+	"recommended_skill5": "pinch_various_up_plus"
+  },
+  {
+    "event1_type": "runaway",
+	"event1_label": "player",
+	"event1_start_time": 1,
+	"event1_range_time": -1,
+    "event2_type": "powerup",
+	"event2_label": "player_jump_up_l",
+	"event2_start_time": 1,
+	"event2_range_time": -1,
+    "event3_type": "slippery",
+	"event3_label": "player",
+	"event3_start_time": 1,
+	"event3_range_time": -1,
+	"recommended_skill1": "spike_shoes",
+	"recommended_skill2": "slow_super_armor"
+  },
+  {
+    "event1_type": "sleep",
+	"event1_label": "player",
+	"event1_start_time": 10,
+	"event1_range_time": 0,
+	"event1_count": 200,
+	"recommended_skill_fixed1": "sleep_invalid",
+	"recommended_skill1": "jump_plus"
+  },
+  {
+    "event1_type": "earthquake",
+	"event1_start_time": 8,
+	"event1_range_time": 0,
+	"event1_count": 200,
+	"recommended_skill_fixed1": "slip_invalid",
+	"recommended_skill1": "jump_plus"
+  }
+]
